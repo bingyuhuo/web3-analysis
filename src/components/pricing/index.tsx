@@ -137,12 +137,11 @@ export default function Pricing() {
         functionName: 'transfer',
         args: [RECEIVER_ADDRESS, parseUnits(amount.toString(), 6)]
       }).catch((error) => {
-        // 捕获用户拒绝的错误
         if (error.message.includes('User rejected') || error.message.includes('User denied')) {
-          console.log('User canceled the payment');  // 只记录日志
-          return null;  // 返回 null 表示交易被取消
+          console.log('User canceled the payment');
+          return null;
         }
-        throw error;  // 其他错误继续抛出
+        throw error;
       });
 
       // 如果用户取消了交易，直接返回
@@ -150,30 +149,54 @@ export default function Pricing() {
         return;
       }
 
-      // 2. 验证交易
-      const verifyRes = await fetch('/api/verify-transaction', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          order_no: orderData.data.order_no,
-          transaction_hash: hash,
-        }),
-      });
+      // 2. 等待交易确认
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const verifyData = await verifyRes.json();
-      
-      if (verifyData.code !== 0) {
-        alert('Payment failed, please try again');
-        return;
+      // 3. 验证交易
+      let retries = 3;
+      let success = false;
+
+      while (retries > 0 && !success) {
+        try {
+          const verifyRes = await fetch('/api/verify-transaction', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              order_no: orderData.data.order_no,
+              transaction_hash: hash,
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+          
+          if (verifyData.code === 0) {
+            success = true;
+            // 4. 交易验证成功后跳转
+            router.push(`/pay-success?tx=${hash}&order_no=${orderData.data.order_no}`);
+            break;
+          }
+
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        } catch (error) {
+          console.error('Verification attempt failed:', error);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
       }
 
-      // 3. 交易验证成功后跳转
-      router.push(`/pay-success?tx=${hash}&order_no=${orderData.data.order_no}`);
+      if (!success) {
+        throw new Error('Transaction verification failed');
+      }
 
     } catch (error) {
-      console.error('Transfer failed:', error);  // 记录其他错误
+      console.error('Transfer failed:', error);
       alert('Payment failed, please try again');
     } finally {
       setLoading({ ...loading, transfer: false });
