@@ -1,5 +1,10 @@
 {
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "api/gen-reports": {
+      "maxDuration": 60
+    }
+  }
 }
