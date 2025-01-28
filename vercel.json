@@ -3,7 +3,7 @@
   "installCommand": "pnpm install",
   "framework": "nextjs",
   "functions": {
-    "/api/gen-reports": {
+    "api/**/*": {
       "maxDuration": 60
     }
   }
