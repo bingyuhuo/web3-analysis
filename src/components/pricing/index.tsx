@@ -149,51 +149,8 @@ export default function Pricing() {
         return;
       }
 
-      // 2. 等待交易确认
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // 3. 验证交易
-      let retries = 3;
-      let success = false;
-
-      while (retries > 0 && !success) {
-        try {
-          const verifyRes = await fetch('/api/verify-transaction', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              order_no: orderData.data.order_no,
-              transaction_hash: hash,
-            }),
-          });
-
-          const verifyData = await verifyRes.json();
-          
-          if (verifyData.code === 0) {
-            success = true;
-            // 4. 交易验证成功后跳转
-            router.push(`/pay-success?tx=${hash}&order_no=${orderData.data.order_no}`);
-            break;
-          }
-
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-        } catch (error) {
-          console.error('Verification attempt failed:', error);
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-        }
-      }
-
-      if (!success) {
-        throw new Error('Transaction verification failed');
-      }
+      // 2. 直接跳转到成功页面，让成功页面处理验证
+      router.push(`/pay-success?tx=${hash}&order_no=${orderData.data.order_no}`);
 
     } catch (error) {
       console.error('Transfer failed:', error);
