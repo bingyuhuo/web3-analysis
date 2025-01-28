@@ -29,16 +29,21 @@ export default function PaySuccess() {
     // 处理订单
     const processOrder = async () => {
       try {
-        const response = await fetch('/api/verify-transaction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transaction_hash: txHash, order_no: orderNo }),
-        });
+        // 添加重试机制
+        let retries = 3;
+        let success = false;
 
-        const data = await response.json();
-        
-        if (isSubscribed) {
+        while (retries > 0 && !success) {
+          const response = await fetch('/api/verify-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transaction_hash: txHash, order_no: orderNo }),
+          });
+
+          const data = await response.json();
+          
           if (data.code === 0) {
+            success = true;
             setStatus('Payment successful!');
             // 开始倒计时
             timer = setInterval(() => {
@@ -51,27 +56,24 @@ export default function PaySuccess() {
                 return prev - 1;
               });
             }, 1000);
-          } else {
-            setStatus('Order processing failed');
-            // 使用 setTimeout 延迟跳转
-            setTimeout(() => {
-              if (isSubscribed) {
-                router.push('/');
-              }
-            }, 3000);
+            break;
+          }
+
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
+
+        if (!success) {
+          setStatus('Order processing failed');
+          setTimeout(() => router.push('/'), 3000);
+        }
+
       } catch (error) {
         console.error('Failed to process order:', error);
-        if (isSubscribed) {
-          setStatus('Order processing error');
-          // 使用 setTimeout 延迟跳转
-          setTimeout(() => {
-            if (isSubscribed) {
-              router.push('/');
-            }
-          }, 3000);
-        }
+        setStatus('Order processing error');
+        setTimeout(() => router.push('/'), 3000);
       }
     };
 
@@ -102,3 +104,4 @@ export default function PaySuccess() {
     </div>
   );
 }
+

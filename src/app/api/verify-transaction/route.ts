@@ -7,8 +7,17 @@ export async function POST(req: Request) {
     const { transaction_hash, order_no } = await req.json();
     console.log('Processing order:', { transaction_hash, order_no });
 
-    // 获取订单信息
-    const order = await findOrderByOrderNo(order_no);
+    // 添加重试机制
+    let retries = 3;
+    let order = null;
+
+    while (retries > 0) {
+      order = await findOrderByOrderNo(order_no);
+      if (order) break;
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒
+      retries--;
+    }
+
     if (!order) {
       return NextResponse.json({ 
         code: -1, 
