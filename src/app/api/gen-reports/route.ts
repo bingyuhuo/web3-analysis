@@ -97,6 +97,11 @@ async function saveReportAndAddToUser(
 }
 
 export async function POST(req: Request) {
+  // 在函数开始处定义 headers
+  const headers = new Headers({
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
+  });
+
   try {
     const { projectName, address } = await req.json();
     
@@ -111,7 +116,7 @@ export async function POST(req: Request) {
       return Response.json({
         code: -1,
         message: "Insufficient points"
-      });
+      }, { headers: headers });
     }
 
     console.log('用户积分:', userCreditsQuery.rows[0]); // 添加日志
@@ -126,13 +131,13 @@ export async function POST(req: Request) {
         return Response.json({
           code: -2,
           message: checkResult.reason || "This item cannot be analyzed at the moment"
-        });
+        }, { headers: headers });
       }
     } catch (error: any) {
       return Response.json({
         code: -2,
         message: error.message || "Project check failed"
-      });
+      }, { headers: headers });
     }
 
     // 3. 生成报告内容
@@ -144,13 +149,13 @@ export async function POST(req: Request) {
         return Response.json({
           code: -2,
           message: "Failed to generate report content"
-        });
+        }, { headers: headers });
       }
     } catch (error: any) {
       return Response.json({
         code: -2,
         message: error.message || "Failed to generate report"
-      });
+      }, { headers: headers });
     }
 
     try {
@@ -188,23 +193,23 @@ export async function POST(req: Request) {
         created_at: new Date().toISOString()
       });
 
-      return Response.json({ 
-        code: 0, 
-        message: "ok", 
-        data: savedReport 
-      });
+      return new Response(JSON.stringify({
+        code: 0,
+        message: "ok",
+        data: savedReport
+      }), { headers: headers });
     } catch (error: any) {
       return Response.json({
         code: -1,
         message: "Failed to save report or deduct credits"
-      });
+      }, { headers: headers });
     }
 
   } catch (error: any) {
     return Response.json({
       code: -1,
       message: error.message || "Failed to generate report"
-    });
+    }, { headers });
   }
 }
 
