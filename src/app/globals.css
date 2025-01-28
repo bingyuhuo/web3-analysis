@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-gradient: linear-gradient(to right, #7C3AED, #3B82F6);
+  --background-gradient: linear-gradient(to bottom, #0F172A, #1E293B);
+  --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+}
+
+body {
+  background: var(--background-gradient);
+  color: #E2E8F0;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.neon-border {
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.7);
+}
