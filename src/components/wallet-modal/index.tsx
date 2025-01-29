@@ -1,6 +1,7 @@
 import { Dialog } from '@headlessui/react'
 import Image from 'next/image'
 import { useConnect, useAccount } from 'wagmi'
+import { useEffect } from 'react'
 
 interface WalletModalProps {
   isOpen: boolean
@@ -11,6 +12,14 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connectors } = useConnect()
   const { address } = useAccount()
   
+  // 监听地址变化，当地址存在时关闭模态框
+  useEffect(() => {
+    if (address) {
+      console.log('Address detected, closing modal:', address)
+      onClose()
+    }
+  }, [address, onClose])
+
   const handleWalletConnect = async (connector: any) => {
     try {
       console.log('Start connecting...', connector)

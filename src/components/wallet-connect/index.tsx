@@ -7,6 +7,7 @@ import { UserCredits } from "@/types/user";
 import { useDisconnect, useAccount } from "wagmi";
 import Link from "next/link";
 import WalletModal from "../wallet-modal/index";
+import { getApiBaseUrl } from '@/config/api'
 
 export default function WalletConnect() {
   const appKit = useAppKit() as unknown as AppKit;
@@ -63,7 +64,8 @@ export default function WalletConnect() {
   const fetchUserCredits = async () => {
     if (!address) return;
     try {
-      const res = await fetch("/api/get-user-credits", {
+      const baseUrl = getApiBaseUrl()
+      const res = await fetch(`${baseUrl}/api/get-user-credits`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +83,8 @@ export default function WalletConnect() {
   const checkExpiring = async () => {
     if (!address) return;
     try {
-      const expiringInfo = await fetch("/api/check-expiring-credits", {
+      const baseUrl = getApiBaseUrl()
+      const expiringInfo = await fetch(`${baseUrl}/api/check-expiring-credits`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
