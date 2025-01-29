@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { useConnect, useAccount } from 'wagmi'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface WalletModalProps {
   isOpen: boolean
@@ -10,6 +10,7 @@ interface WalletModalProps {
 export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connectors } = useConnect()
   const { address } = useAccount()
+  const [isConnecting, setIsConnecting] = useState(false)
   
   console.log('【WalletModal】Component rendering:', { 
     isOpen, 
@@ -18,17 +19,18 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
     connectorIds: connectors.map(c => c.id)
   });
 
-  // 监听地址变化，当地址存在时关闭模态框
+  // 只在连接成功后关闭模态框
   useEffect(() => {
-    console.log('【WalletModal】Effect triggered:', { address });
-    if (address) {
-      console.log('【WalletModal】Closing modal due to address:', address);
-      onClose();
+    if (isConnecting && address) {
+      console.log('【WalletModal】Connection successful, closing modal:', address)
+      setIsConnecting(false)
+      onClose()
     }
-  }, [address, onClose])
+  }, [address, isConnecting, onClose])
 
   const handleWalletConnect = async (connector: any) => {
     try {
+      setIsConnecting(true)
       console.log('Start connecting...', connector)
       
       // 检查 MetaMask 是否安装
@@ -46,14 +48,12 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       })
       
       // 连接钱包
-      await connect({ 
-        connector,
-        chainId: 137 // 指定 Polygon 网络
-      })
+      await connect({ connector })
 
     } catch (error) {
       console.error('连接失败:', error)
       alert('连接失败: ' + (error as Error).message)
+      setIsConnecting(false)
     }
   }
 
