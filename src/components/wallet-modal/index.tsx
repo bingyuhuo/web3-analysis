@@ -24,10 +24,13 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       
       // 1. 连接钱包
       await connect({ connector })
-      console.log('Connection successful')
       
-      // 2. 连接成功后直接关闭弹窗
-      onClose()
+      // 2. 验证连接状态
+      if (address) {
+        console.log('Connected with address:', address)
+        // 3. 连接成功后关闭弹窗
+        onClose()
+      }
 
     } catch (error) {
       console.error('Connection failed:', error)

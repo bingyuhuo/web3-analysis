@@ -18,13 +18,20 @@ export default function WalletConnect() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // 添加状态变化的日志
+  useEffect(() => {
+    console.log('Wallet connection status:', { isConnected, address });
+  }, [isConnected, address]);
+
   useEffect(() => {
     setMounted(true);
+    console.log('Component mounted');
   }, []);
 
   // 获取用户积分
   useEffect(() => {
     if (isConnected && address) {
+      console.log('Fetching user credits for address:', address);
       fetchUserCredits();
       checkExpiring();
     }
@@ -64,6 +71,7 @@ export default function WalletConnect() {
         body: JSON.stringify({ address }),
       });
       const { data } = await res.json();
+      console.log('User credits fetched:', data);
       setCredits(data);
     } catch (error) {
       console.error("Failed to fetch credits:", error);
