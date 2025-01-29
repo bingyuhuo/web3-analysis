@@ -44,18 +44,14 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   }
 
   return (
-    <Dialog 
-      open={isOpen} 
-      onClose={onClose}
-      className="relative z-50"
-    >
-      <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-sm rounded-2xl bg-[#0D1117] border border-[#30363D] p-6 shadow-2xl">
-          <Dialog.Title className="text-2xl font-bold mb-6 text-purple-400">
-            Select Wallet
-          </Dialog.Title>
-          <div className="space-y-4">
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/70" onClick={onClose} />
+          <div className="relative z-[101] w-full max-w-sm rounded-2xl bg-[#0D1117] border border-[#30363D] p-6 shadow-2xl">
+            <h2 className="text-2xl font-bold mb-6 text-purple-400">
+              Select Wallet
+            </h2>
             <button
               onClick={async () => {
                 const connector = connectors.find(c => c.id === 'injected')
@@ -81,8 +77,8 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
               </div>
             </button>
           </div>
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+        </div>
+      )}
+    </>
   );
 } 
