@@ -1,26 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useAppKit, useAppKitAccount } from "@/context";
+import { useAppKit } from "@/context";
 import type { AppKit } from "@/types/app";
 import { UserCredits } from "@/types/user";
-import { useDisconnect } from "wagmi";
+import { useDisconnect, useAccount } from "wagmi";
 import Link from "next/link";
 import WalletModal from "../wallet-modal/index";
-import { useAccount } from "wagmi";
 
 export default function WalletConnect() {
   const appKit = useAppKit() as unknown as AppKit;
-  const { address, isConnected } = useAppKitAccount();
+  const { address, isConnected } = useAccount();
   const [showDropdown, setShowDropdown] = useState(false);
   const [credits, setCredits] = useState<UserCredits | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { disconnect } = useDisconnect();
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const { address: accountAddress, isConnected: accountIsConnected } =
-    useAccount();
-
-  // 添加客户端渲染标记
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
