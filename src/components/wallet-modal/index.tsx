@@ -31,28 +31,20 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const handleWalletConnect = async (connector: any) => {
     try {
       setIsConnecting(true)
-      console.log('Start connecting...', connector)
       
-      // 检查 MetaMask 是否安装
       if (typeof window.ethereum === 'undefined') {
-        alert('请先安装 MetaMask')
+        alert('Please install MetaMask first')
         window.open('https://metamask.io/download/', '_blank')
         return
       }
       
-      // 添加更多日志
-      console.log('检查连接器状态:', {
+      await connect({ 
         connector,
-        ethereum: window.ethereum,
-        isMetaMask: window.ethereum?.isMetaMask
+        chainId: 137 // Polygon network
       })
-      
-      // 连接钱包
-      await connect({ connector })
 
     } catch (error) {
-      console.error('连接失败:', error)
-      alert('连接失败: ' + (error as Error).message)
+      alert('Connection failed: ' + (error as Error).message)
       setIsConnecting(false)
     }
   }
@@ -60,36 +52,46 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/70" onClick={onClose} />
-          <div className="relative z-[101] w-full max-w-sm rounded-2xl bg-[#0D1117] border border-[#30363D] p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6 text-purple-400">
-              Select Wallet
-            </h2>
-            <button
-              onClick={async () => {
-                const connector = connectors.find(c => c.id === 'injected')
-                if (connector) {
-                  await handleWalletConnect(connector)
-                }
-              }}
-              className="w-full flex items-center justify-between p-4 rounded-xl
-                       border border-[#30363D] bg-[#161B22] 
-                       hover:bg-[#1C2128] hover:border-[#6E7681] 
-                       transition-all duration-200 ease-in-out"
-            >
-              <span className="font-medium text-gray-200">MetaMask</span>
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-400">Click to connect</span>
-                <Image 
-                  src="/images/wallets/metamask.svg"
-                  alt="MetaMask"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8"
-                />
-              </div>
-            </button>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* 背景遮罩 */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
+            onClick={onClose}
+          />
+          
+          {/* 模态框容器 - 使用 flex 实现居中 */}
+          <div className="flex min-h-screen items-center justify-center p-4">
+            {/* 模态框内容 */}
+            <div className="relative w-full max-w-sm rounded-2xl bg-[#0D1117] border border-[#30363D] p-6 shadow-2xl">
+              <h2 className="text-2xl font-bold mb-6 text-purple-400">
+                Select Wallet
+              </h2>
+              
+              <button
+                onClick={async () => {
+                  const connector = connectors.find(c => c.id === 'injected')
+                  if (connector) {
+                    await handleWalletConnect(connector)
+                  }
+                }}
+                className="w-full flex items-center justify-between p-4 rounded-xl
+                         border border-[#30363D] bg-[#161B22] 
+                         hover:bg-[#1C2128] hover:border-[#6E7681] 
+                         transition-all duration-200 ease-in-out"
+              >
+                <span className="font-medium text-gray-200">MetaMask</span>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-400">Click to connect</span>
+                  <Image 
+                    src="/images/wallets/metamask.svg"
+                    alt="MetaMask"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8"
+                  />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}
