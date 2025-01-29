@@ -218,7 +218,10 @@ export default function WalletConnect() {
       )}
       <WalletModal
         isOpen={showWalletModal}
-        onClose={() => setShowWalletModal(false)}
+        onClose={() => {
+          console.log('【WalletConnect】Closing modal');
+          setShowWalletModal(false);
+        }}
       />
     </div>
   );
