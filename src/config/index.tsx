@@ -16,6 +16,7 @@ const connectors = [
     shimDisconnect: true
   })
 ]
+console.log('【Config】Initialized connectors:', connectors);
 
 // 创建 wagmi 适配器
 export const wagmiAdapter = new WagmiAdapter({

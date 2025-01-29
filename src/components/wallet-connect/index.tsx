@@ -117,8 +117,10 @@ export default function WalletConnect() {
   }, []);
 
   const handleConnect = () => {
-    console.log('Opening wallet modal...');
+    console.log('【WalletConnect】Button clicked');
+    console.log('【WalletConnect】Current showWalletModal state:', showWalletModal);
     setShowWalletModal(true);
+    console.log('【WalletConnect】After setState showWalletModal:', true);
   };
 
   const handleDisconnect = async () => {
@@ -154,6 +156,12 @@ export default function WalletConnect() {
       </button>
     );
   }
+
+  console.log('【WalletConnect】Rendering, states:', {
+    isConnected,
+    showWalletModal,
+    mounted
+  });
 
   return (
     <div className="relative" ref={dropdownRef}>

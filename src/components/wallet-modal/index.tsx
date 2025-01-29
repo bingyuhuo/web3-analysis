@@ -1,4 +1,3 @@
-import { Dialog } from '@headlessui/react'
 import Image from 'next/image'
 import { useConnect, useAccount } from 'wagmi'
 import { useEffect } from 'react'
@@ -12,14 +11,19 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connectors } = useConnect()
   const { address } = useAccount()
   
-  // 添加调试日志
-  console.log('WalletModal render:', { isOpen, address })
+  console.log('【WalletModal】Component rendering:', { 
+    isOpen, 
+    address,
+    hasConnectors: connectors.length > 0,
+    connectorIds: connectors.map(c => c.id)
+  });
 
   // 监听地址变化，当地址存在时关闭模态框
   useEffect(() => {
+    console.log('【WalletModal】Effect triggered:', { address });
     if (address) {
-      console.log('Address detected, closing modal:', address)
-      onClose()
+      console.log('【WalletModal】Closing modal due to address:', address);
+      onClose();
     }
   }, [address, onClose])
 
