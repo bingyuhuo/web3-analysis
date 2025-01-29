@@ -1,55 +1,56 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react'
-import { useAppKit,useAppKitAccount } from '@/context'
-import type { AppKit } from '@/types/app'
-import { UserCredits } from '@/types/user'
-import { useDisconnect } from 'wagmi'
-import Link from 'next/link'
-import WalletModal from '../wallet-modal/index'
-import { useAccount } from 'wagmi'
+import { useState, useRef, useEffect } from "react";
+import { useAppKit, useAppKitAccount } from "@/context";
+import type { AppKit } from "@/types/app";
+import { UserCredits } from "@/types/user";
+import { useDisconnect } from "wagmi";
+import Link from "next/link";
+import WalletModal from "../wallet-modal/index";
+import { useAccount } from "wagmi";
 
 export default function WalletConnect() {
-  const appKit = useAppKit() as unknown as AppKit
-  const { address, isConnected } = useAppKitAccount()
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [credits, setCredits] = useState<UserCredits | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const { disconnect } = useDisconnect()
-  const [showWalletModal, setShowWalletModal] = useState(false)
-  const { address: accountAddress, isConnected: accountIsConnected } = useAccount()
-  
+  const appKit = useAppKit() as unknown as AppKit;
+  const { address, isConnected } = useAppKitAccount();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [credits, setCredits] = useState<UserCredits | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { disconnect } = useDisconnect();
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const { address: accountAddress, isConnected: accountIsConnected } =
+    useAccount();
+
   // 添加客户端渲染标记
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // 获取用户积分
   useEffect(() => {
     if (isConnected && address) {
-      fetchUserCredits()
-      checkExpiring()
+      fetchUserCredits();
+      checkExpiring();
     }
-  }, [isConnected, address])
+  }, [isConnected, address]);
 
   // 添加用户信息同步
   useEffect(() => {
     const syncUserInfo = async () => {
       if (isConnected && address) {
         try {
-          const res = await fetch('/api/get-user-info', {
-            method: 'POST',
+          const res = await fetch("/api/get-user-info", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            body: JSON.stringify({ address })
+            body: JSON.stringify({ address }),
           });
           // 同步完用户信息后获取积分
           fetchUserCredits();
         } catch (error) {
-          console.error('同步用户信息失败:', error);
+          console.error("同步用户信息失败:", error);
         }
       }
     };
@@ -58,79 +59,86 @@ export default function WalletConnect() {
   }, [isConnected, address]);
 
   const fetchUserCredits = async () => {
-    if (!address) return
+    if (!address) return;
     try {
-      const res = await fetch('/api/get-user-credits', {
-        method: 'POST',
+      const res = await fetch("/api/get-user-credits", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ address })
-      })
-      const { data } = await res.json()
-      setCredits(data)
+        body: JSON.stringify({ address }),
+      });
+      const { data } = await res.json();
+      setCredits(data);
     } catch (error) {
-      console.error('Failed to fetch credits:', error)
+      console.error("Failed to fetch credits:", error);
     }
-  }
+  };
 
   const checkExpiring = async () => {
     if (!address) return;
     try {
-      const expiringInfo = await fetch('/api/check-expiring-credits', {
-        method: 'POST',
+      const expiringInfo = await fetch("/api/check-expiring-credits", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ address })
-      }).then(res => res.json());
+        body: JSON.stringify({ address }),
+      }).then((res) => res.json());
 
       if (expiringInfo.data?.isExpiring) {
-        alert(`remind:you have ${expiringInfo.data.credits} points that will expire in ${expiringInfo.data.daysLeft} days`);
+        alert(
+          `remind:you have ${expiringInfo.data.credits} points that will expire in ${expiringInfo.data.daysLeft} days`
+        );
       }
     } catch (error) {
-      console.error('Failed to check expiring credits:', error);
+      console.error("Failed to check expiring credits:", error);
     }
   };
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleConnect = () => {
-    setShowWalletModal(true)
-  }
+    console.log('Opening wallet modal...');
+    setShowWalletModal(true);
+  };
 
   const handleDisconnect = async () => {
     try {
-      await disconnect()
-      await appKit.close()
+      await disconnect();
+      await appKit.close();
       // 清除本地存储
-      localStorage.removeItem('wagmi.wallet')
-      localStorage.removeItem('wagmi.connected')
-      localStorage.removeItem('wagmi.account')
+      localStorage.removeItem("wagmi.wallet");
+      localStorage.removeItem("wagmi.connected");
+      localStorage.removeItem("wagmi.account");
       // 关闭下拉菜单
-      setShowDropdown(false)
+      setShowDropdown(false);
     } catch (error) {
-      console.error('Failed to disconnect:', error)
-      alert('Failed to disconnect, please try again')
+      console.error("Failed to disconnect:", error);
+      alert("Failed to disconnect, please try again");
     }
-  }
+  };
 
   const formatAddress = (addr: string | undefined) => {
-    if (!addr) return 'Not connected'
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
+    if (!addr) return "Not connected";
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   // 确保正确计算可用积分
-  const availableCredits = credits?.left_credits || 0 - (credits?.used_credits || 0);
+  const availableCredits =
+    credits?.left_credits || 0 - (credits?.used_credits || 0);
 
   // 只在客户端渲染时显示内容
   if (!mounted) {
@@ -138,7 +146,7 @@ export default function WalletConnect() {
       <button className="rounded-lg px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 transition-all duration-300">
         Connect Wallet
       </button>
-    )
+    );
   }
 
   return (
@@ -164,9 +172,11 @@ export default function WalletConnect() {
               <div className="p-4 space-y-4">
                 <div>
                   <p className="text-sm text-gray-400">Wallet Address</p>
-                  <p className="font-mono text-sm text-white truncate">{address}</p>
+                  <p className="font-mono text-sm text-white truncate">
+                    {address}
+                  </p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm text-gray-400">Available Credits</p>
                   <p className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
@@ -192,10 +202,10 @@ export default function WalletConnect() {
           )}
         </>
       )}
-      <WalletModal 
-        isOpen={showWalletModal} 
-        onClose={() => setShowWalletModal(false)} 
+      <WalletModal
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
       />
     </div>
-  )
-} 
+  );
+}
