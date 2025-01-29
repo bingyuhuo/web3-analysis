@@ -12,6 +12,12 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { connect, connectors } = useConnect()
   const { address } = useAccount()
   
+  // 添加调试日志
+  console.log('WalletModal render:', { isOpen, address })
+
+  // 如果模态框未打开，直接返回 null
+  if (!isOpen) return null;
+
   // 监听地址变化，当地址存在时关闭模态框
   useEffect(() => {
     if (address) {
