@@ -15,16 +15,16 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   // 添加调试日志
   console.log('WalletModal render:', { isOpen, address })
 
-  // 如果模态框未打开，直接返回 null
-  if (!isOpen) return null;
-
-  // 监听地址变化，当地址存在时关闭模态框
+  // 移动到这里：在任何条件判断之前注册 effect
   useEffect(() => {
     if (address) {
       console.log('Address detected, closing modal:', address)
       onClose()
     }
   }, [address, onClose])
+
+  // 如果模态框未打开，直接返回 null
+  if (!isOpen) return null;
 
   const handleWalletConnect = async (connector: any) => {
     try {
