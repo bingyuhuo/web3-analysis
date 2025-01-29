@@ -33,17 +33,27 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       
       // 检查 MetaMask 是否安装
       if (typeof window.ethereum === 'undefined') {
-        alert('Please install MetaMask first')
+        alert('请先安装 MetaMask')
         window.open('https://metamask.io/download/', '_blank')
         return
       }
       
+      // 添加更多日志
+      console.log('检查连接器状态:', {
+        connector,
+        ethereum: window.ethereum,
+        isMetaMask: window.ethereum?.isMetaMask
+      })
+      
       // 连接钱包
-      await connect({ connector })
+      await connect({ 
+        connector,
+        chainId: 137 // 指定 Polygon 网络
+      })
 
     } catch (error) {
-      console.error('Connection failed:', error)
-      alert('Connection failed: ' + (error as Error).message)
+      console.error('连接失败:', error)
+      alert('连接失败: ' + (error as Error).message)
     }
   }
 
