@@ -13,17 +13,25 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   
   const handleWalletConnect = async (connector: any) => {
     try {
-      console.log('Start connecting...')
+      console.log('Start connecting...', connector)
+      
+      // 检查 MetaMask 是否安装
+      if (typeof window.ethereum === 'undefined') {
+        alert('Please install MetaMask first')
+        window.open('https://metamask.io/download/', '_blank')
+        return
+      }
       
       // 1. 连接钱包
       await connect({ connector })
+      console.log('Connection successful')
       
       // 2. 连接成功后直接关闭弹窗
       onClose()
 
     } catch (error) {
       console.error('Connection failed:', error)
-      alert('Connection failed, please try again')
+      alert('Connection failed: ' + (error as Error).message)
     }
   }
 
@@ -35,14 +43,17 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       downloadUrl: 'https://metamask.io/download/',
       check: () => {
         const provider = (window as any).ethereum
-        return provider?.isMetaMask && !provider?.isOKX
+        const isInstalled = provider?.isMetaMask && !provider?.isOKX
+        console.log('MetaMask check:', { isInstalled, provider })
+        return isInstalled
       },
       onClick: async () => {
         try {
-          console.log(' Start connecting MetaMask...')
+          console.log('Clicking MetaMask connect...')
           
           // 使用 injected 连接器
           const connector = connectors.find(c => c.id === 'injected')
+          console.log('Found connector:', connector)
           
           if (!connector) {
             throw new Error('Connector not found')
@@ -51,7 +62,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
           await handleWalletConnect(connector)
         } catch (error) {
           console.error('MetaMask connection failed:', error)
-          alert('Connection failed, please try again')
+          alert('Connection failed: ' + (error as Error).message)
         }
       }
     }

@@ -25,7 +25,12 @@ export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   projectId,
   networks: [polygon],
-  connectors
+  connectors: [
+    injected({ 
+      target: 'metaMask',
+      shimDisconnect: true
+    })
+  ]
 })
 
 export const config = wagmiAdapter.wagmiConfig
