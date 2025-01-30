@@ -96,7 +96,7 @@ export async function updateUserCredits(user_address: string, credits: number, p
     return await db.query(
       `INSERT INTO user_credits 
        (user_address, credits, plan, updated_at, expires_at) 
-       VALUES ($1, $2, $3, $4, $5)`,
+       VALUES ($1, $2, $3::varchar, $4, $5)`,
       [user_address, credits, plan, now, expires_at]
     );
   } else {
@@ -104,10 +104,10 @@ export async function updateUserCredits(user_address: string, credits: number, p
     return await db.query(
       `UPDATE user_credits 
        SET credits = credits + $1, 
-           plan = $2, 
+           plan = $2::varchar, 
            updated_at = $3,
            expires_at = CASE 
-             WHEN $2 = 'monthly' THEN $4
+             WHEN $2::varchar = 'monthly' THEN $4
              ELSE expires_at
            END
        WHERE user_address = $5`,

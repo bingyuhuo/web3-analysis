@@ -46,6 +46,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <ContextProvider cookies={cookieHeader}>
           {children}
+          <div id="modal-root" />
         </ContextProvider>
       </body>
     </html>

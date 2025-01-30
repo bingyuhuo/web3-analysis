@@ -10,7 +10,7 @@ if (!projectId) {
 }
 
 // 创建连接器 - 只支持 MetaMask
-const connectors = [
+export const connectors = [
   injected({ 
     target: 'metaMask',
     shimDisconnect: true
@@ -23,14 +23,9 @@ export const wagmiAdapter = new WagmiAdapter({
     storage: cookieStorage
   }),
   ssr: true,
-  projectId,
+  projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID!,
   networks: [polygon],
-  connectors: [
-    injected({ 
-      target: 'metaMask',
-      shimDisconnect: true
-    })
-  ]
+  connectors
 })
 
 export const config = wagmiAdapter.wagmiConfig
