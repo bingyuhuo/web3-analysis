@@ -41,6 +41,7 @@ export default function ({ setReports }: Props) {
   }, [isConnected, address]);
 
   const handleSubmit = async function () {
+    // 防重复提交检查
     if (loading) return;
       
     if (!projectName) {
@@ -65,9 +66,13 @@ export default function ({ setReports }: Props) {
     }
   
     setLoading(true);
+
+    // 创建遮罩层和加载提示
+    const overlay = document.createElement('div');
+    const loadingMessage = document.createElement('div');
+    
     try {
-      // 创建遮罩层
-      const overlay = document.createElement('div');
+      // 设置遮罩层样式
       overlay.style.position = 'fixed';
       overlay.style.top = '0';
       overlay.style.left = '0';
@@ -76,10 +81,9 @@ export default function ({ setReports }: Props) {
       overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
       overlay.style.zIndex = '9998';
       document.body.appendChild(overlay);
-  
-      // 显示生成中的提示
-      const loadingMessage = document.createElement('div');
-      loadingMessage.textContent = 'The report is being generated. It is expected to take 4 minutes.\nlease do not switch pages or close the window....';
+
+      // 设置加载提示样式
+      loadingMessage.textContent = 'The report is being generated. It is expected to take 4 minutes.\nPlease do not switch pages or close the window....';
       loadingMessage.style.position = 'fixed';
       loadingMessage.style.top = '50%';
       loadingMessage.style.left = '50%';
@@ -90,68 +94,60 @@ export default function ({ setReports }: Props) {
       loadingMessage.style.borderRadius = '8px';
       loadingMessage.style.zIndex = '9999';
       document.body.appendChild(loadingMessage);
-  
-      // 设置超时
+
+      // 设置超时处理
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 300000); // 5分钟超时
+        setTimeout(() => reject(new Error('Request timeout')), 300000);
       });
 
-      try {
-        // 使用 Promise.race 来处理超时
-        const result = await Promise.race([
-          fetch("/api/gen-reports", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              projectName,
-              address,
-            }),
+      // 发送请求
+      const result = await Promise.race([
+        fetch("/api/gen-reports", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            projectName,
+            address,
           }),
-          timeoutPromise
-        ]) as Response;
+        }),
+        timeoutPromise
+      ]) as Response;
 
-        const responseData = await result.json();
-        console.log('Report generation response:', responseData);
-        
-        // 统一的错误码处理
-        switch (responseData.code) {
-          case 0:
-            setReports(prev => [responseData.data, ...prev]);
-            setProjectName("");
-            // 更新本地积分显示
-            setCredits(prev => ({
-              ...prev!,
-              left_credits: prev!.left_credits - 10
-            }));
-            break;
-          case -2:  // 项目不可分析的错误应该优先处理
-            alert(responseData.message || "This item cannot be analyzed at the moment.");
-            break;
-          case -1:  // 积分不足的错误
-            alert("Insufficient points, please purchase points first");
-            break;
-          case -3:  // 请求频率限制
-            alert("The request is too frequent, please wait 5 minutes and try again.");
-            break;
-          default:
-            alert(responseData.message || "Failed to generate report.");
-        }
-      } catch (error) {
-        console.error("Failed to generate report:", error);
-        alert("Failed to generate report,please try again later");
-      } finally {
-        // 移除加载提示和遮罩层
-        const loadingMessage = document.querySelector('div[style*="z-index: 9999"]');
-        const overlay = document.querySelector('div[style*="z-index: 9998"]');
-        if (loadingMessage) document.body.removeChild(loadingMessage);
-        if (overlay) document.body.removeChild(overlay);
-        setLoading(false);
+      const responseData = await result.json();
+      console.log('Report generation response:', responseData);
+      
+      // 统一的错误码处理
+      switch (responseData.code) {
+        case 0:
+          setReports(prev => [responseData.data, ...prev]);
+          setProjectName("");
+          setCredits(prev => ({
+            ...prev!,
+            left_credits: prev!.left_credits - 10
+          }));
+          break;
+        case -2:
+          alert(responseData.message || "This item cannot be analyzed at the moment.");
+          break;
+        case -1:
+          alert("Insufficient points, please purchase points first");
+          break;
+        case -3:
+          alert("The request is too frequent, please wait 5 minutes and try again.");
+          break;
+        default:
+          alert(responseData.message || "Failed to generate report.");
       }
     } catch (error) {
       console.error("Failed to generate report:", error);
       alert("Failed to generate report,please try again later");
+    } finally {
+      // 移除加载提示和遮罩层
+      if (loadingMessage.parentNode) document.body.removeChild(loadingMessage);
+      if (overlay.parentNode) document.body.removeChild(overlay);
+      setLoading(false);
     }
   };
 
