@@ -19,6 +19,10 @@ const supabase = createClient(
   }
 );
 
+// 添加请求缓存 Map
+const recentRequests = new Map<string, number>();
+const REQUEST_TIMEOUT = 5 * 60 * 1000; // 5分钟超时
+
 // 修改保存图片函数
 async function saveImage(url: string, projectName: string): Promise<string> {
   const response = await fetch(url);
@@ -97,14 +101,35 @@ async function saveReportAndAddToUser(
 }
 
 export async function POST(req: Request) {
-  // 在函数开始处定义 headers
   const headers = new Headers({
     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
   });
 
   try {
-    const { projectName, address } = await req.json();
+    const { projectName, address, requestId } = await req.json();
     
+    // 检查是否是重复请求
+    const requestKey = `${address}-${projectName}`;
+    const lastRequestTime = recentRequests.get(requestKey);
+    const now = Date.now();
+
+    if (lastRequestTime && (now - lastRequestTime) < REQUEST_TIMEOUT) {
+      return Response.json({
+        code: -3,
+        message: "The request is too frequent, please wait 5 minutes and try again."
+      }, { headers });
+    }
+
+    // 记录本次请求时间
+    recentRequests.set(requestKey, now);
+
+    // 清理过期的请求记录
+    recentRequests.forEach((time, key) => {
+      if (now - time > REQUEST_TIMEOUT) {
+        recentRequests.delete(key);
+      }
+    });
+
     // 1. 检查用户积分
     const db = getDb();
     const userCreditsQuery = await db.query(
