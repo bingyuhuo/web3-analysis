@@ -23,6 +23,12 @@ const supabase = createClient(
 const recentRequests = new Map<string, number>();
 const REQUEST_TIMEOUT = 5 * 60 * 1000; // 5分钟超时
 
+const pendingRequests = new Map<string, {
+  timestamp: number;
+  projectName: string;
+  address: string;
+}>();
+
 // 修改保存图片函数
 async function saveImage(url: string, projectName: string): Promise<string> {
   const response = await fetch(url);
@@ -108,26 +114,23 @@ export async function POST(req: Request) {
   try {
     const { projectName, address, requestId } = await req.json();
     
-    // 检查是否是重复请求
+    // 生成请求唯一标识
     const requestKey = `${address}-${projectName}`;
-    const lastRequestTime = recentRequests.get(requestKey);
-    const now = Date.now();
-
-    if (lastRequestTime && (now - lastRequestTime) < REQUEST_TIMEOUT) {
+    
+    // 检查是否有未完成的相同请求
+    const pending = pendingRequests.get(requestKey);
+    if (pending && Date.now() - pending.timestamp < 5 * 60 * 1000) { // 5分钟内的请求视为重复
       return Response.json({
         code: -3,
-        message: "The request is too frequent, please wait 5 minutes and try again."
+        message: "A report for this project is already being generated"
       }, { headers });
     }
-
-    // 记录本次请求时间
-    recentRequests.set(requestKey, now);
-
-    // 清理过期的请求记录
-    recentRequests.forEach((time, key) => {
-      if (now - time > REQUEST_TIMEOUT) {
-        recentRequests.delete(key);
-      }
+    
+    // 记录新请求
+    pendingRequests.set(requestKey, {
+      timestamp: Date.now(),
+      projectName,
+      address
     });
 
     // 1. 检查用户积分
@@ -228,6 +231,9 @@ export async function POST(req: Request) {
         code: -1,
         message: "Failed to save report or deduct credits"
       }, { headers: headers });
+    } finally {
+      // 请求完成后删除记录
+      pendingRequests.delete(requestKey);
     }
 
   } catch (error: any) {

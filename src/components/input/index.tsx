@@ -94,30 +94,31 @@ export default function ({ setReports }: Props) {
       loadingMessage.style.zIndex = '9999';
       document.body.appendChild(loadingMessage);
 
-      // 设置超时处理
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 300000);
-      });
-
       // 添加请求去重参数
       const requestId = `${address}-${projectName}-${Date.now()}`;
       
-      const result = await Promise.race([
-        fetch("/api/gen-reports", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": requestId, // 添加请求唯一标识
-          },
-          body: JSON.stringify({
-            projectName,
-            address,
-            requestId, // 在请求体中也包含请求ID
-          }),
-        }),
-        timeoutPromise
-      ]) as Response;
+      let timeoutId: NodeJS.Timeout | undefined;
+      const timeoutPromise = new Promise<Response>((_, reject) => {
+        const id = setTimeout(() => reject(new Error('Request timeout')), 300000);
+        timeoutId = id;
+      });
 
+      const fetchPromise = fetch("/api/gen-reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": requestId,
+        },
+        body: JSON.stringify({
+          projectName,
+          address,
+          requestId,
+        }),
+      });
+
+      const result: Response = await Promise.race([fetchPromise, timeoutPromise]);
+      clearTimeout(timeoutId); // 清除超时定时器
+      
       const responseData = await result.json();
       console.log('Report generation response:', responseData);
       
@@ -153,9 +154,13 @@ export default function ({ setReports }: Props) {
             alert(responseData.message || "Failed to generate report.");
         }
       }
-    } catch (error) {
-      console.error("Failed to generate report:", error);
-      alert("Failed to generate report,please try again later");
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'Request timeout') {
+        alert("Report generation timed out, but it may still be processing. Please check back later.");
+      } else {
+        console.error("Failed to generate report:", error);
+        alert("Failed to generate report, please try again later");
+      }
     } finally {
       // 清理工作
       if (loadingMessage.parentNode) document.body.removeChild(loadingMessage);
