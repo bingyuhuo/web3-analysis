@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { fetchWithAuth } from '@/utils/api'
 import { useAccount } from 'wagmi'
 import { useEffect, useState } from 'react'
+import { formatShortDate } from '@/utils/date'
 
 export default function ({ reports }: ReportProps) {
   
@@ -76,7 +77,7 @@ export default function ({ reports }: ReportProps) {
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="text-xl font-bold text-white">{report.projectName}</h3>
                       <span className="text-sm text-gray-300">
-                        {new Date(report.created_at).toLocaleDateString()}
+                        {formatShortDate(report.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-300 line-clamp-2">{report.summary}</p>

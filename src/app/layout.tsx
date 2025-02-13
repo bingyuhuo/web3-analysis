@@ -42,7 +42,7 @@ export default async function RootLayout({
   const cookieHeader = (await headers()).get('cookie') || undefined
 
   return (
-    <html lang="zh">
+    <html lang="en">
       <body className={inter.className}>
         <ContextProvider cookies={cookieHeader}>
           {children}

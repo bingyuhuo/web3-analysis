@@ -94,7 +94,7 @@ export default function SearchSuggestions({ searchTerm, onSelect }: Props) {
                   <div className="font-medium">{report.projectName}</div>
                 </div>
                 <div className="text-sm text-gray-400 ml-4">
-                  {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                  {new Date(report.created_at).toLocaleDateString('en-US')}
                 </div>
               </div>
             </li>

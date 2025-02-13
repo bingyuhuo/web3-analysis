@@ -1,4 +1,5 @@
 import { Report } from '@/types/report';
+import { formatDate } from '@/utils/date';
 
 interface ReportNavProps {
   report: Report;
@@ -36,7 +37,7 @@ export default function ReportNav({ report, sections }: ReportNavProps) {
           <div className="space-y-2 text-sm text-gray-400">
             <p className="flex items-center space-x-2">
               <span className="text-purple-400">Generated time:</span>
-              <span>{new Date(report.created_at).toLocaleString()}</span>
+              <span>{formatDate(report.created_at)}</span>
             </p>
             <p className="flex items-center space-x-2">
               <span className="text-purple-400">Creator:</span>
