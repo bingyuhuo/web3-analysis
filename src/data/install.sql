@@ -74,6 +74,19 @@ CREATE INDEX idx_credit_consumption_report ON credit_consumption(report_id);
 CREATE INDEX idx_user_reports_user ON user_reports(user_address);
 CREATE INDEX idx_user_reports_report ON user_reports(report_id);
 
+CREATE TABLE report_requests (
+  id SERIAL PRIMARY KEY,
+  project_name TEXT NOT NULL,
+  wallet_address TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建索引以提高查询性能
+CREATE INDEX idx_report_requests_wallet ON report_requests(wallet_address);
+CREATE INDEX idx_report_requests_status ON report_requests(status);
+
 -- 启用 RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;

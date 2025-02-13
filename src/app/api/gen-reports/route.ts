@@ -7,6 +7,9 @@ import { consumeUserCredits } from '@/models/order';
 import { checkProjectAnalyzable } from "@/service/report-generator";
 import { createClient } from '@supabase/supabase-js';
 
+// 使用 getDb() 获取数据库实例
+const db = getDb();
+
 // 初始化 Supabase 客户端
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,7 +97,6 @@ async function saveReportAndAddToUser(
 
   const savedReport = await insertReport(report);
   
-  const db = getDb();
   await db.query(
     `INSERT INTO user_reports (
       user_address, report_id, created_at
@@ -107,34 +109,32 @@ async function saveReportAndAddToUser(
 }
 
 export async function POST(req: Request) {
-  const headers = new Headers({
-    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
-  });
-
+  const { projectName, address } = await req.json();
+  
   try {
-    const { projectName, address, requestId } = await req.json();
-    
-    // 生成请求唯一标识
-    const requestKey = `${address}-${projectName}`;
-    
-    // 检查是否有未完成的相同请求
-    const pending = pendingRequests.get(requestKey);
-    if (pending && Date.now() - pending.timestamp < 5 * 60 * 1000) { // 5分钟内的请求视为重复
+    // 检查是否有未完成的请求
+    const pendingRequest = await db.query(`
+      SELECT * FROM report_requests 
+      WHERE project_name = $1 
+      AND wallet_address = $2 
+      AND status = 'pending'
+      AND created_at > NOW() - INTERVAL '5 minutes'
+    `, [projectName, address]);
+
+    if (pendingRequest.rows.length > 0) {
       return Response.json({
         code: -3,
-        message: "A report for this project is already being generated"
-      }, { headers });
+        message: "You have a pending report generation request. Please wait."
+      });
     }
-    
-    // 记录新请求
-    pendingRequests.set(requestKey, {
-      timestamp: Date.now(),
-      projectName,
-      address
-    });
+
+    // 创建新的请求记录
+    await db.query(`
+      INSERT INTO report_requests (project_name, wallet_address, status)
+      VALUES ($1, $2, 'pending')
+    `, [projectName, address]);
 
     // 1. 检查用户积分
-    const db = getDb();
     const userCreditsQuery = await db.query(
       `SELECT credits as left_credits FROM user_credits WHERE user_address = $1`,
       [address]
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
       return Response.json({
         code: -1,
         message: "Insufficient points"
-      }, { headers: headers });
+      });
     }
 
     console.log('用户积分:', userCreditsQuery.rows[0]); // 添加日志
@@ -159,13 +159,13 @@ export async function POST(req: Request) {
         return Response.json({
           code: -2,
           message: checkResult.reason || "This item cannot be analyzed at the moment"
-        }, { headers: headers });
+        });
       }
     } catch (error: any) {
       return Response.json({
         code: -2,
         message: error.message || "Project check failed"
-      }, { headers: headers });
+      });
     }
 
     // 3. 生成报告内容
@@ -177,13 +177,13 @@ export async function POST(req: Request) {
         return Response.json({
           code: -2,
           message: "Failed to generate report content"
-        }, { headers: headers });
+        });
       }
     } catch (error: any) {
       return Response.json({
         code: -2,
         message: error.message || "Failed to generate report"
-      }, { headers: headers });
+      });
     }
 
     try {
@@ -221,26 +221,43 @@ export async function POST(req: Request) {
         created_at: new Date().toISOString()
       });
 
-      return new Response(JSON.stringify({
+      // 更新请求状态
+      await db.query(`
+        UPDATE report_requests 
+        SET status = 'completed', updated_at = NOW()
+        WHERE project_name = $1 AND wallet_address = $2
+      `, [projectName, address]);
+
+      return Response.json({
         code: 0,
-        message: "ok",
         data: savedReport
-      }), { headers: headers });
+      });
     } catch (error: any) {
+      // 更新请求状态为失败
+      await db.query(`
+        UPDATE report_requests 
+        SET status = 'failed', updated_at = NOW()
+        WHERE project_name = $1 AND wallet_address = $2
+      `, [projectName, address]);
+
       return Response.json({
         code: -1,
         message: "Failed to save report or deduct credits"
-      }, { headers: headers });
-    } finally {
-      // 请求完成后删除记录
-      pendingRequests.delete(requestKey);
+      });
     }
 
   } catch (error: any) {
+    // 更新请求状态为失败
+    await db.query(`
+      UPDATE report_requests 
+      SET status = 'failed', updated_at = NOW()
+      WHERE project_name = $1 AND wallet_address = $2
+    `, [projectName, address]);
+
     return Response.json({
       code: -1,
       message: error.message || "Failed to generate report"
-    }, { headers });
+    });
   }
 }
 
