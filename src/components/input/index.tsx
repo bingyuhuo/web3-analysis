@@ -18,6 +18,7 @@ export default function ({ setReports }: Props) {
   const submitting = useRef(false);
   const { address, isConnected } = useAppKitAccount();
   const [credits, setCredits] = useState<UserCredits | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // 获取用户积分
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function ({ setReports }: Props) {
   }, [isConnected, address]);
 
   const handleSubmit = async function () {
-    if (submitting.current || loading) return;
+    if (submitting.current || loading || isGenerating) return;
     
     if (!projectName) {
       alert("Please enter the name of the Web3 project to be analyzed");
@@ -138,6 +139,16 @@ export default function ({ setReports }: Props) {
           ...prev!,
           left_credits: prev!.left_credits - 10
         }));
+        setIsGenerating(false);
+      } else if (responseData.code === 1) {
+        setIsGenerating(true);
+        loadingMessage.textContent = 'Your report is being generated, this may take a few minutes. You can refresh the page later to see the result.';
+        setProjectName("");
+        setTimeout(() => {
+          if (loadingMessage.parentNode) document.body.removeChild(loadingMessage);
+          if (overlay.parentNode) document.body.removeChild(overlay);
+          alert("Your report is being generated. You can:\n1. Wait a few minutes\n2. Refresh the page to see the result\n3. Check back later");
+        }, 3000);
       } else {
         // 统一的错误码处理
         switch (responseData.code) {
@@ -168,6 +179,7 @@ export default function ({ setReports }: Props) {
       setLoading(false);
       // 重置防重复提交标记
       submitting.current = false;
+      setIsGenerating(false);
     }
   };
 
@@ -187,18 +199,18 @@ export default function ({ setReports }: Props) {
       <Button 
         className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white transition-all duration-300 shadow-[0_0_15px_rgba(168,85,247,0.5)] hover:shadow-[0_0_25px_rgba(168,85,247,0.7)]" 
         onClick={handleSubmit} 
-        disabled={loading}
+        disabled={loading || isGenerating}
       >
-        {loading ? "Analyzing..." : "Generate"}
+        {loading ? "Analyzing..." : isGenerating ? "Generating..." : "Generate"}
       </Button>
       
       <div className="flex-1 relative">
         <Input
           type="text"
-          placeholder="Please enter the name of the Web3 project to be analyzed"
+          placeholder={isGenerating ? "Report is being generated..." : "Please enter the name of the Web3 project to be analyzed"}
           value={projectName || ""}
           onChange={(e) => setProjectName(e.target.value)}
-          disabled={loading}
+          disabled={loading || isGenerating}
           className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
         />
         <SearchSuggestions 

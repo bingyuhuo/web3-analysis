@@ -112,7 +112,26 @@ export async function POST(req: Request) {
   const { projectName, address } = await req.json();
   
   try {
-    // 检查是否有未完成的请求
+    // 1. 检查用户自己最近5分钟内是否已经生成过这个项目的报告
+    const existingReport = await db.query(`
+      SELECT r.* 
+      FROM reports r
+      WHERE r.project_name = $1 
+      AND r.user_address = $2
+      AND r.created_at > NOW() - INTERVAL '5 minutes'
+      ORDER BY r.created_at DESC
+      LIMIT 1
+    `, [projectName, address]);
+
+    if (existingReport.rows.length > 0) {
+      // 如果用户最近已生成过该报告，直接返回
+      return Response.json({
+        code: 0,
+        data: existingReport.rows[0]
+      });
+    }
+
+    // 2. 检查是否有正在处理的请求
     const pendingRequest = await db.query(`
       SELECT * FROM report_requests 
       WHERE project_name = $1 
@@ -123,24 +142,37 @@ export async function POST(req: Request) {
 
     if (pendingRequest.rows.length > 0) {
       return Response.json({
-        code: -3,
-        message: "You have a pending report generation request. Please wait."
+        code: 1,
+        message: "Your report is being generated, please wait...",
+        data: {
+          requestId: pendingRequest.rows[0].id,
+          status: 'pending'
+        }
       });
     }
 
-    // 创建新的请求记录
-    await db.query(`
+    // 3. 创建新的请求记录
+    const newRequest = await db.query(`
       INSERT INTO report_requests (project_name, wallet_address, status)
       VALUES ($1, $2, 'pending')
+      RETURNING id
     `, [projectName, address]);
 
-    // 1. 检查用户积分
+    // 4. 检查用户积分
     const userCreditsQuery = await db.query(
       `SELECT credits as left_credits FROM user_credits WHERE user_address = $1`,
       [address]
     );
 
     if (!userCreditsQuery.rows[0] || userCreditsQuery.rows[0].left_credits < 10) {
+      // 如果积分不足，更新请求状态为失败
+      await db.query(`
+        UPDATE report_requests 
+        SET status = 'failed', 
+            updated_at = NOW() 
+        WHERE id = $1
+      `, [newRequest.rows[0].id]);
+
       return Response.json({
         code: -1,
         message: "Insufficient points"
@@ -151,7 +183,7 @@ export async function POST(req: Request) {
 
     const client = getOpenAIClient();
     
-    // 2. 检查项目可分析性
+    // 5. 检查项目可分析性
     try {
       const checkResult = await checkProjectAnalyzable(client, projectName);
       
@@ -168,7 +200,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. 生成报告内容
+    // 6. 生成报告内容
     let analysis;
     try {
       analysis = await retryOperation(() => generateProjectAnalysis(client, projectName));
@@ -187,7 +219,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      // 4. 生成图片
+      // 7. 生成图片
       const imageResponse = await client.images.generate({
         model: "dall-e-3",
         prompt: analysis.summary.imageDescription + " in a professional business style, abstract, safe for work",
@@ -196,13 +228,13 @@ export async function POST(req: Request) {
         n: 1,
       });
 
-      // 5. 保存图片
+      // 8. 保存图片
       const imageUrl = imageResponse.data[0].url;
       const savedImageUrl = imageUrl ? 
         await saveImage(imageUrl, sanitizeFileName(projectName)) : 
         '/placeholder.jpg';
 
-      // 6. 保存报告
+      // 9. 保存报告
       const savedReport = await saveReportAndAddToUser(
         projectName, 
         {
@@ -213,7 +245,7 @@ export async function POST(req: Request) {
         address
       );
 
-      // 7. 报告完全保存成功后才扣除积分
+      // 10. 报告完全保存成功后才扣除积分
       await consumeUserCredits({
         user_address: address,
         amount: 10,
@@ -225,8 +257,8 @@ export async function POST(req: Request) {
       await db.query(`
         UPDATE report_requests 
         SET status = 'completed', updated_at = NOW()
-        WHERE project_name = $1 AND wallet_address = $2
-      `, [projectName, address]);
+        WHERE id = $1
+      `, [newRequest.rows[0].id]);
 
       return Response.json({
         code: 0,
@@ -237,8 +269,8 @@ export async function POST(req: Request) {
       await db.query(`
         UPDATE report_requests 
         SET status = 'failed', updated_at = NOW()
-        WHERE project_name = $1 AND wallet_address = $2
-      `, [projectName, address]);
+        WHERE id = $1
+      `, [newRequest.rows[0].id]);
 
       return Response.json({
         code: -1,
@@ -247,16 +279,10 @@ export async function POST(req: Request) {
     }
 
   } catch (error: any) {
-    // 更新请求状态为失败
-    await db.query(`
-      UPDATE report_requests 
-      SET status = 'failed', updated_at = NOW()
-      WHERE project_name = $1 AND wallet_address = $2
-    `, [projectName, address]);
-
+    console.error('Error generating report:', error);
     return Response.json({
       code: -1,
-      message: error.message || "Failed to generate report"
+      message: "Failed to generate report"
     });
   }
 }
