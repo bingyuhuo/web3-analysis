@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Analytics } from '@vercel/analytics/react';
 
 import { headers } from "next/headers"; 
 import ContextProvider from '@/context'
@@ -47,6 +48,7 @@ export default async function RootLayout({
         <ContextProvider cookies={cookieHeader}>
           {children}
           <div id="modal-root" />
+          <Analytics />
         </ContextProvider>
       </body>
     </html>
