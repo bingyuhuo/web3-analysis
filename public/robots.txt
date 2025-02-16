@@ -2,5 +2,18 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
+Disallow: /private/
+Disallow: /*.json$
 
+# Allow specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Crawl delay
+Crawl-delay: 10
+
+# Sitemap
 Sitemap: https://web3analysis.xyz/sitemap.xml 

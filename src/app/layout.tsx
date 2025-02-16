@@ -9,8 +9,15 @@ import ContextProvider from '@/context'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Web3 Analysis",
-  description: "AI-Powered Web3 Project Analysis Tool",
+  title: {
+    default: "Web3 Analysis - AI-Powered Project Analysis Platform",
+    template: "%s | Web3 Analysis"
+  },
+  description: "Professional AI-powered analysis tool for Web3 projects. Get comprehensive insights on blockchain projects, DeFi protocols, and NFT ventures.",
+  metadataBase: new URL('https://web3analysis.xyz'),
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
@@ -21,17 +28,34 @@ export const metadata: Metadata = {
     ],
     shortcut: '/icon.svg',
   },
-  keywords: 'Web3, Blockchain Analysis, Crypto Research, DeFi Analysis, NFT Projects, Investment Research',
+  keywords: 'Web3, Blockchain Analysis, Crypto Research, DeFi Analysis, NFT Projects, Investment Research, AI Analysis',
   openGraph: {
+    type: 'website',
     title: 'Web3 Project Analysis Platform',
-    description: 'Professional analysis reports for blockchain and Web3 projects',
+    description: 'Professional AI-powered analysis reports for blockchain and Web3 projects',
     images: ['/og-image.jpg'],
+    siteName: 'Web3 Analysis',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Web3 Project Analysis Platform',
-    description: 'Professional analysis reports for blockchain and Web3 projects',
+    description: 'Professional AI-powered analysis reports for blockchain and Web3 projects',
     images: ['/og-image.jpg'],
+    creator: '@web3analysis',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'your-google-site-verification',
   }
 };
 

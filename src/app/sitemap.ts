@@ -3,27 +3,36 @@ import { getReports } from "@/models/report";
 export default async function sitemap() {
   const reports = await getReports();
   const baseUrl = 'https://web3analysis.xyz';
+  const currentDate = new Date().toISOString();
 
-  // 基础页面的 URL
+  // 基础页面
   const routes = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/pricing`,
-      lastModified: new Date(),
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/report`,
-      lastModified: new Date(),
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
   ];
 
-  // 添加所有报告详情页的 URL
+  // 报告详情页
   const reportUrls = reports.map(report => ({
     url: `${baseUrl}/report/${report.id}`,
-    lastModified: new Date(report.created_at),
+    lastModified: new Date(report.created_at).toISOString(),
+    changeFrequency: 'monthly',
+    priority: 0.7,
   }));
 
   return [...routes, ...reportUrls];
