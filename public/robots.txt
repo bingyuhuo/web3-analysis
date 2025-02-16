@@ -16,4 +16,4 @@ Allow: /
 Crawl-delay: 10
 
 # Sitemap
-Sitemap: https://web3analysis.xyz/sitemap.xml 
+Sitemap: https://www.web3analysis.xyz/sitemap.xml 

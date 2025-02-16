@@ -2,7 +2,7 @@ import { getReports } from "@/models/report";
 
 export async function GET() {
   const reports = await getReports();
-  const baseUrl = 'https://web3analysis.xyz';
+  const baseUrl = 'https://www.web3analysis.xyz';
   const currentDate = new Date().toISOString();
 
   // 创建 XML 头部
