@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/react';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { VercelAnalytics } from '@/components/VercelAnalytics';
 
 import { headers } from "next/headers"; 
 import ContextProvider from '@/context'
 
 const inter = Inter({ subsets: ['latin'] })
+
+const GA_TRACKING_ID = 'G-8ZKGYHEMCL'  // 使用你的实际 GA4 跟踪 ID
 
 export const metadata: Metadata = {
   title: {
@@ -68,11 +72,15 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <GoogleAnalytics trackingId={GA_TRACKING_ID} />
+      </head>
       <body className={inter.className}>
         <ContextProvider cookies={cookieHeader}>
           {children}
           <div id="modal-root" />
           <Analytics />
+          <VercelAnalytics />
         </ContextProvider>
       </body>
     </html>

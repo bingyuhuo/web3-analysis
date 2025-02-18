@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@analytics/google-analytics':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@coinbase/wallet-sdk':
         specifier: 4.2.4
         version: 4.2.4
@@ -156,6 +159,9 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@analytics/google-analytics@1.1.0':
+    resolution: {integrity: sha512-i8uGyELMtwEUAf3GNWNLNBzhRvReDn1RUxvMdMhjUA7+GNGxPOM4kkzFfv3giQXKNxTEjfsh75kqNcscbJsuaA==}
 
   '@babel/runtime@7.26.0':
     resolution: {integrity: sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==}
@@ -3007,6 +3013,8 @@ snapshots:
   '@adraffy/ens-normalize@1.11.0': {}
 
   '@alloc/quick-lru@5.2.0': {}
+
+  '@analytics/google-analytics@1.1.0': {}
 
   '@babel/runtime@7.26.0':
     dependencies:
